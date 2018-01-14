@@ -9,7 +9,9 @@ def log(message, prefix = 'Main'):
     date = now.strftime("%m.%d.%Y")
     time = now.strftime("%H:%M:%S")
     log_file = open(LOG_DIR + 'log_' + date, 'a')
-    log_file.write('[' + date + '-' + time + ']' + prefix + ' ' + message + '\n')
+    output = '[' + date + '-' + time + ']' + prefix + ' ' + message + '\n'
+    log_file.write(output)
+    print output
     log_file.close()
 
 def error(message):

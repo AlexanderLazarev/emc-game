@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # Module with functions for working with VK API
 
-import vk
+import vk_api
+import unicodedata
+from vk_api.longpoll import VkLongPoll, VkEventType
 from constants import ID_APP, PROJECT_DIR, SKOPE, GROUP_ID
 from log_functions import log, error
 
@@ -10,19 +12,17 @@ from log_functions import log, error
 def auth():
     result = True
     try:
+        global vk_api_u, vk_api_g, group_session
         auth_data = open(PROJECT_DIR + "auth-data", 'r')
-        login = auth_data.readline()
-        login = login[0:len(login)-1]
-        password = auth_data.readline()
-        password = password[0:len(password)-1]
-        token = auth_data.readline()
-        token = token[0:len(token)-1]
+        user_token = auth_data.readline()
+        user_token = user_token[0:len(user_token)-1]
+        group_token = auth_data.readline()
+        group_token = group_token[0:len(group_token)-1]
         auth_data.close()
-        user_session = vk.AuthSession(ID_APP, login, password, SKOPE)
-        group_session = vk.AuthSession(access_token=token)
-        global vk_api_u, vk_api_g
-        vk_api_u = vk.API(user_session)
-        vk_api_g = vk.API(group_session)
+        group_session = vk_api.VkApi(token=group_token)
+        user_session = vk_api.VkApi(token=user_token)
+        vk_api_g = group_session.get_api()
+        vk_api_u = user_session.get_api()
         log('User authorization successful!')
     except Exception as e:
         error(e)
@@ -43,7 +43,14 @@ def check_user(user_nick):
 # Getting user-id by user-nickname
 def get_uid(user_nick):
     try:
-        result = vk_api_u.users.get(user_ids=user_nick)[0]['uid']
+        result = vk_api_u.users.get(user_ids=user_nick)[0]['id']
+    except:
+        result = False
+    return result
+
+def get_user(user_nick):
+    try:
+        result = vk_api_u.users.get(user_ids=user_nick, fields='id,first_name,last_name')[0]
     except:
         result = False
     return result
@@ -57,10 +64,10 @@ def is_member(user_id):
 
 # Check if the user is an admin
 def is_admin(user_id):
-    admins = vk_api_u.groups.getMembers(group_id=GROUP_ID, fields='first_name', filter='managers')['users']
+    admins = vk_api_g.groups.getMembers(group_id=GROUP_ID, fields='first_name', filter='managers')['items']
     result = False
     for user in admins:
-        uid = user['uid']
+        uid = user['id']
         if user_id == uid:
             result = True
             break
@@ -68,33 +75,27 @@ def is_admin(user_id):
 
 # Send message from group to user
 def send_message(user_id, message):
-    try:
-        vk_api_g.messages.send(user_id=user_id, message=message)
-        log('Отправлено сообщение: ' + message)
-    except Exception as e:
-        error(e)
+    message = message.encode('utf8')
+    vk_api_g.messages.send(user_id=user_id, message=message)
+    log('Отправлено сообщение: ' + message)
+
 
 # Post on group wall
 def post(message):
-    vk_api_u.wall.post(owner_id=-GROUP_ID, message=message,from_group=1)
+    message = message.decode('utf8')
+    print vk_api_u.wall.post(owner_id=-GROUP_ID, message=message,from_group=1)
 
-def long_pol_server():
-    try:
-        LP_data = vk_api_u.messages.getLongPollServer(need_pts=1)
-        global ts, pts
-        ts = int(LP_data['ts'])
-        pts = int(LP_data['pts'])
-        print ts
-        print pts
-        return True
-    except Exception as e:
-        error(e)
-        return False
+def long_pol():
+    longpoll = VkLongPoll(group_session)
+    for event in longpoll.listen():
+        if event.to_me:
+            uid = event.user_id
+            print uid
+            print get_user(uid)
+            send_message(event.user_id, get_user(uid)['first_name'])
 
-def long_pol_history():
-    history = vk_api_u.messages.messages.getLongPollHistory(ts=int(ts), pts=int(pts), max_msg_id=1, version=5.69)
-    print history
 
 auth()
-long_pol_server()
-long_pol_history()
+long_pol()
+#long_pol_server()
+#long_pol_history()

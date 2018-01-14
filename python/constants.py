@@ -15,3 +15,5 @@ SKOPE = 'wall, messages, groups, users, photos'
 
 # EMC constants
 #GROUP_ID = 65590361
+
+#TEST_ID = 159851948
