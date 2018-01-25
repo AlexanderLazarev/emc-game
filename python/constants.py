@@ -1,4 +1,5 @@
-# Module with global constants
+# -*- coding: utf-8 -*-
+# Модуль с глобальными константами
 
 global ID_APP
 global PROJECT_DIR

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-# Module with functions for working with VK API
+# Мудуль с функциями для работы с api вк
 
 import vk_api
-import unicodedata
 from vk_api.longpoll import VkLongPoll, VkEventType
+import unicodedata
 from constants import ID_APP, PROJECT_DIR, SKOPE, GROUP_ID
 from log_functions import log, error
+from support_functions import to_cp1251
 
-
-# Authorization in VK
+# Авторизация вк
 def auth():
     result = True
     try:
@@ -29,10 +29,7 @@ def auth():
         result = False
     return result
 
-# Group-authorization in VK
-
-
-# Check if is vk user
+# Проверка, есть ли такой юзер вк
 def check_user(user_nick):
     try:
         vk_api_u.users.get(user_ids=user_nick)
@@ -40,7 +37,7 @@ def check_user(user_nick):
     except:
         return False
 
-# Getting user-id by user-nickname
+# Получения id юзера по его нику
 def get_uid(user_nick):
     try:
         result = vk_api_u.users.get(user_ids=user_nick)[0]['id']
@@ -48,6 +45,7 @@ def get_uid(user_nick):
         result = False
     return result
 
+# Получение кортежа с id, именем и фамилией юзера
 def get_user(user_nick):
     try:
         result = vk_api_u.users.get(user_ids=user_nick, fields='id,first_name,last_name')[0]
@@ -55,14 +53,14 @@ def get_user(user_nick):
         result = False
     return result
 
-# Check if the user is a member of group
+# Проверка, является ли юзер членом группы
 def is_member(user_id):
     if vk_api_u.groups.isMember(group_id=GROUP_ID, user_id=user_id):
         return True
     else:
         return False
 
-# Check if the user is an admin
+# Проверка, является ли юзер админом группы
 def is_admin(user_id):
     admins = vk_api_g.groups.getMembers(group_id=GROUP_ID, fields='first_name', filter='managers')['items']
     result = False
@@ -73,29 +71,27 @@ def is_admin(user_id):
             break
     return result
 
-# Send message from group to user
+# Отправка сообщения юзеру от лица группы
 def send_message(user_id, message):
-    message = message.encode('utf8')
-    vk_api_g.messages.send(user_id=user_id, message=message)
+    message = str(message)
+    send_message = message.decode('utf8')
+    vk_api_g.messages.send(user_id=user_id, message=send_message)
     log('Отправлено сообщение: ' + message)
 
 
-# Post on group wall
+# Постинг на стене группы
 def post(message):
+    message = str(message)
     message = message.decode('utf8')
-    print vk_api_u.wall.post(owner_id=-GROUP_ID, message=message,from_group=1)
+    print(vk_api_u.wall.post(owner_id=-GROUP_ID, message=message,from_group=1))
 
-def long_pol():
+# Функция получения сообщений
+def long_pol(function):
     longpoll = VkLongPoll(group_session)
     for event in longpoll.listen():
         if event.to_me:
-            uid = event.user_id
-            print uid
-            print get_user(uid)
-            send_message(event.user_id, get_user(uid)['first_name'])
-
-
-auth()
-long_pol()
-#long_pol_server()
-#long_pol_history()
+            message = event.text
+            log('Получено сообщение: ' + to_cp1251(message))
+            user = get_user(event.user_id)
+            user.update({'message' : message})
+            function(user)

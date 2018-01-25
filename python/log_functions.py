@@ -1,4 +1,5 @@
-# Module with secondary functions
+# -*- coding: utf-8 -*-
+# Модуль с функциями для логирования
 
 import datetime
 from constants import LOG_DIR
