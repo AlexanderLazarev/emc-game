@@ -15,5 +15,18 @@ def log(message, prefix = 'Main'):
     print output
     log_file.close()
 
-def error(message):
+# Логирование ошибок
+def log_error(message):
     log(str(message), 'Error')
+
+# Логирование сообщение вк
+def log_message(message):
+    log(str(message), 'Mess')
+
+# Логирование игровых действий
+def log_actions(message):
+    log(str(message), 'Action')
+
+# Логирование действий при начале/конце игрового цикла
+def log_cicle(message):
+    log(str(message), 'Cicle')

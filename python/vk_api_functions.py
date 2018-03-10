@@ -5,7 +5,7 @@ import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 import unicodedata
 from constants import ID_APP, PROJECT_DIR, SKOPE, GROUP_ID
-from log_functions import log, error
+from log_functions import log, log_error, log_message, log_cicle
 from support_functions import to_cp1251
 
 # Авторизация вк
@@ -25,7 +25,7 @@ def auth():
         vk_api_u = user_session.get_api()
         log('User authorization successful!')
     except Exception as e:
-        error(e)
+        log_error(e)
         result = False
     return result
 
@@ -76,14 +76,21 @@ def send_message(user_id, message):
     message = str(message)
     send_message = message.decode('utf8')
     vk_api_g.messages.send(user_id=user_id, message=send_message)
-    log('Отправлено сообщение: ' + message)
+    log_message('Отправлено сообщение: ' + message)
+
+def send_image_message(user_id, message, image):
+    message = str(message)
+    send_message = message.decode('utf8')
+    vk_api_g.messages.send(user_id=user_id, message=send_message, attachment=image)
+    log_message('Отправлено сообщение: ' + message)
 
 
 # Постинг на стене группы
-def post(message):
+def post(message, attachment):
     message = str(message)
+    log_cicle('Залит пост: ' + message)
     message = message.decode('utf8')
-    print(vk_api_u.wall.post(owner_id=-GROUP_ID, message=message,from_group=1))
+    vk_api_u.wall.post(owner_id=-GROUP_ID, message=message, attachment=attachment, from_group=1)
 
 # Функция получения сообщений
 def long_pol(function):
@@ -91,7 +98,7 @@ def long_pol(function):
     for event in longpoll.listen():
         if event.to_me:
             message = event.text
-            log('Получено сообщение: ' + to_cp1251(message))
+            log_message('Получено сообщение: ' + to_cp1251(message))
             user = get_user(event.user_id)
             user.update({'message' : message})
             function(user)
