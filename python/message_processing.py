@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from vk_api_functions import send_message, send_image_message, is_member, is_admin
+from vk_api_functions import send_message, send_image_message, is_member, is_admin, get_uid, check_user
 from support_functions import to_cp1251
 from game_functions import *
 
@@ -53,6 +53,8 @@ GK_ANSWERE_ABOUT_NO_ATTEMPS = '''Ты уже потратил все свои п
 Подожди начала следующего игрового цикла. Ну или попробуй прямо сейчас скормить этого чела кому-то из своей команды)'''
 GK_ANSWERE_ABOUT_YOURSELF = '''Себя кикнуть не получится)
 Если хочешь выйти из игры, юзай команду «game exit»'''
+GK_ANSWERE_TO_ENEMY = '''Тебя кто-то вычислил и кокнул в игре, соболезную.
+Но ты сможешь возобновить игру после начала следующего игрового цикла. Я пришлю тебе уведомление, оки?'''
 
 # Функция сортировки полученных сообщений
 def sort_message(user):
@@ -75,9 +77,9 @@ def get_help(user):
     send_image_message(user['id'], HELP_MESSAGE, GAME_SCHEMA_IMAGE)
 
 def start_game(user):
-#    if is_admin(user['id']):
-#        send_message(user['id'], GS_ANSWERE_TO_ADMIN)
-#    else:
+    if is_admin(user['id']):
+        send_message(user['id'], GS_ANSWERE_TO_ADMIN)
+    else:
         state = game_state(user['id'])
         if state == None:
             team = game_min_team()
@@ -128,6 +130,7 @@ def kick_enemy(user):
                         send_message(user['id'], GK_ANSWERE_ABOUT_CREWMAN)
                     elif kick_result == ATTACK_ENEMY:
                         send_message(user['id'], GK_ANSWERE_ABOUT_ENEMY)
+                        send_message(target_uid, GK_ANSWERE_TO_ENEMY)
                     elif kick_result == ATTACK_OTHER:
                         send_message(user['id'], GK_ANSWERE_ABOUT_OTHER)
             else:

@@ -39,10 +39,10 @@ def game_attack(uid_attack, uid_target):
         if state_attack == state_target:
             result = ATTACK_CREWMAN
         elif TEAM_ENEMIES[state_attack] == state_target:
-            result = ATTACK_OTHER
-        else:
             game_ban(uid_target)
             result = ATTACK_ENEMY
+        else:
+            result = ATTACK_OTHER
     game_minus_attempt(uid_attack)
     return result
 
